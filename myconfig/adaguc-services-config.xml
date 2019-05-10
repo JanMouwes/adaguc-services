@@ -4,12 +4,12 @@
   <userworkspace>/adaguc/userworkspace</userworkspace>
   <basedir>/adaguc/basedir</basedir>
   <server>
-    <port>8080</port>
-    <porthttps>8443</porthttps>
+    <port>{ENV.PORT}</port>
+    <!--<porthttps>8443</porthttps>-->
     <contextpath>/adaguc-services</contextpath>
   </server>
   <security>
-    <enablessl>true</enablessl>
+    <enablessl>false</enablessl>
     
     <truststore>/adaguc/security/truststore.ts</truststore>
     <trustrootscadirectory>/root/.globus/certificates/</trustrootscadirectory>
