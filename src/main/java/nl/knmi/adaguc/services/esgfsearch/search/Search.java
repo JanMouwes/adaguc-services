@@ -22,6 +22,7 @@ import nl.knmi.adaguc.services.esgfsearch.search.cache.CacheItem;
 import nl.knmi.adaguc.services.esgfsearch.search.cache.DiskCache;
 import nl.knmi.adaguc.services.esgfsearch.search.catalog.CatalogChecker;
 import nl.knmi.adaguc.tools.*;
+import nl.knmi.adaguc.tools.http.exceptions.BadRequestException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,6 +30,8 @@ import org.json.JSONTokener;
 
 import nl.knmi.adaguc.tools.JSONResponse.JSONResponseException;
 import nl.knmi.adaguc.tools.MyXMLParser.XMLElement;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 
 
 public class Search {
@@ -597,45 +600,20 @@ public class Search {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            String service = HTTPTools.getHTTPParam(request, "service");
-            String mode = HTTPTools.getHTTPParam(request, "request");
-
-            String jsonp = null;
+            String service, mode;
             try {
-
-                jsonp = HTTPTools.getHTTPParam(request, "jsonp");
-            } catch (Exception e) {
-                try {
-                    jsonp = HTTPTools.getHTTPParam(request, "callback");
-                } catch (Exception ignored) {
-                }
+                service = HTTPTools.getHTTPParam(request, "service");
+                mode = HTTPTools.getHTTPParam(request, "request");
+            } catch (Exception ignored) {
+                throw new BadRequestException();
             }
 
-            String query = null;
-            try {
-                query = HTTPTools.getHTTPParam(request, "query");
-            } catch (Exception ignored) {}
+            String jsonp = HTTPTools.getHTTPParam(request, "jsonp", HTTPTools.getHTTPParam(request, "callback", null));
+            String query = HTTPTools.getHTTPParam(request, "query", null);
+            String facets = HTTPTools.getHTTPParam(request, "facet", null);
 
-            String facets = null;
-            try {
-                facets = HTTPTools.getHTTPParam(request, "facet");
-            } catch (Exception ignored) {}
-
-            int pageLimit = 25;
-            try {
-                String pageLimitStr = HTTPTools.getHTTPParam(request, "pagelimit");
-                if (pageLimitStr != null) {
-                    pageLimit = Integer.parseInt(pageLimitStr);
-                }
-            } catch (Exception ignored) {}
-
-            int pageNr = 0;
-            try {
-                String pageNrStr = HTTPTools.getHTTPParam(request, "pagenumber");
-                if (pageNrStr != null) {
-                    pageNr = Integer.parseInt(pageNrStr);
-                }
-            } catch (Exception ignored) {}
+            int pageLimit = Integer.parseInt(HTTPTools.getHTTPParam(request, "pagelimit", "25"));
+            int pageNr = Integer.parseInt(HTTPTools.getHTTPParam(request, "pagenumber", "0"));
 
             if (!service.equalsIgnoreCase("search")) return;
 
@@ -686,7 +664,11 @@ public class Search {
             jsonResponse.setJSONP(jsonp);
             response.setContentType(jsonResponse.getMimeType());
             response.getOutputStream().print(jsonResponse.getMessage());
-        } catch (Exception ignored) {}
+        } catch (HttpStatusCodeException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
     }
 
 

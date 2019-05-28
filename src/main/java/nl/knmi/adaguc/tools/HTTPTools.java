@@ -93,7 +93,7 @@ public class HTTPTools {
 			}
 		}
 
-		if(value==null||value[0]==null||value.length==0){
+		if(value==null||value.length==0||value[0]==null){
 			throw new Exception("UnableFindParam " + name);
 		}
 
@@ -102,6 +102,25 @@ public class HTTPTools {
 		paramValue = validateInputTokens(paramValue);
 		return paramValue;
 	}
+
+	/**
+	 * Returns a default value if query-param not present
+     *
+	 * @see	HTTPTools#getHTTPParam(HttpServletRequest, String)
+	 *
+	 * @param defaultValue value to be returned if query-param not present
+	 * @return value of the query-param if present, defaultValue otherwise
+	 */
+	public static String getHTTPParam(HttpServletRequest request, String name, String defaultValue) {
+		try {
+			String actual = getHTTPParam(request, name);
+
+			return (actual != null) ? actual : defaultValue;
+		} catch (Exception e) {
+			return defaultValue;
+		}
+	}
+
 	/**
 	 * Returns a list of values of a key, but does checking on valid tokens for XSS attacks and decodes the URL.
 	 * @param request The HTTPServlet containing the KVP's
@@ -127,13 +146,13 @@ public class HTTPTools {
 	}
 
 	/**
-	 * Get values for a multiple keys with the same name in a URL, 
-	 * e.g. ?variable=psl&variable=tas means: key="variable" value="psl,tas" (as list) 
+	 * Get values for a multiple keys with the same name in a URL,
+	 * e.g. ?variable=psl&variable=tas means: key="variable" value="psl,tas" (as list)
 	 * @param url The URL containging the KVP encoded data
 	 * @param key The key we want to search for
 	 * @return value, null if not found.
-	 * @throws InvalidHTTPKeyValueTokensException 
-	 * @throws Exception 
+	 * @throws InvalidHTTPKeyValueTokensException
+	 * @throws Exception
 	 */
 	static public List<String> getKVPList(String url, String key) throws InvalidHTTPKeyValueTokensException {
 
@@ -163,7 +182,7 @@ public class HTTPTools {
 	 * @param queryString
 	 * @param string
 	 * @return
-	 * @throws InvalidHTTPKeyValueTokensException 
+	 * @throws InvalidHTTPKeyValueTokensException
 	 * @throws Exception
 	 */
 	public static String getKVPItem(String queryString, String string) throws InvalidHTTPKeyValueTokensException {
