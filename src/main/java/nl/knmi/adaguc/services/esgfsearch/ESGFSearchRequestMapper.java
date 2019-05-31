@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.knmi.adaguc.services.esgfsearch.search.Search;
+import nl.knmi.adaguc.services.esgfsearch.threddscatalog.THREDDSCatalogToHTML;
 import org.json.JSONObject;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -85,17 +86,16 @@ public class ESGFSearchRequestMapper implements DisposableBean {
     public void catalog(HttpServletResponse response, HttpServletRequest request) throws IOException {
         JSONResponse jsonResponse = new JSONResponse(request);
 
-
         Debug.println("esgfsearch/catalog received");
         try {
             boolean enabled = ESGFSearchConfigurator.getEnabled();
             if (!enabled) {
                 jsonResponse.setMessage(new JSONObject().put("error", "ADAGUC esgfsearch is not enabled"));
-            } else {
-                Debug.println("catalog");
-
-                (new THREDDSCatalogToHTML()).handleCatalogBrowserRequest(request, response);
+                return;
             }
+            Debug.println("catalog");
+
+            (new THREDDSCatalogToHTML()).handleCatalogBrowserRequest(request, response);
         } catch (Exception e) {
             jsonResponse.setException("error: " + e.getMessage(), e);
         }

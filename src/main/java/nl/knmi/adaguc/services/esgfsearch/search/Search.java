@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,8 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import nl.knmi.adaguc.services.esgfsearch.LockOnQuery;
-import nl.knmi.adaguc.services.esgfsearch.THREDDSCatalogBrowser;
-import nl.knmi.adaguc.services.esgfsearch.search.cache.CacheItem;
+import nl.knmi.adaguc.services.esgfsearch.threddscatalog.THREDDSCatalogBrowser;
 import nl.knmi.adaguc.services.esgfsearch.search.cache.DiskCache;
 import nl.knmi.adaguc.services.esgfsearch.search.catalog.CatalogChecker;
 import nl.knmi.adaguc.tools.*;
@@ -30,7 +28,6 @@ import org.json.JSONTokener;
 
 import nl.knmi.adaguc.tools.JSONResponse.JSONResponseException;
 import nl.knmi.adaguc.tools.MyXMLParser.XMLElement;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 
 
@@ -170,8 +167,8 @@ public class Search {
 
         String identifier = identifierPrefix + esgfQuery;
 
-        String XML;
         String cachedXML = diskCache.get(identifier + ".xml");
+        String XML = cachedXML;
 
         if (cachedXML == null) {
             String url = searchEndPoint + esgfQuery;
@@ -185,8 +182,6 @@ public class Search {
                 r.setException("IOException", e2, url);
                 return r;
             }
-        } else {
-            XML = cachedXML;
         }
 
         MyXMLParser.XMLElement el = new MyXMLParser.XMLElement();
@@ -378,7 +373,7 @@ public class Search {
                     String url = results.getJSONObject(j).getString("url");
 
 
-                    JSONArray files = THREDDSCatalogBrowser.browseThreddsCatalog(request, url, variableFilter, null);
+                    JSONArray files = THREDDSCatalogBrowser.browseThreddsCatalog(url, variableFilter, null);
 
                     if (files == null) throw new Exception("THREDDS Files null");
 
