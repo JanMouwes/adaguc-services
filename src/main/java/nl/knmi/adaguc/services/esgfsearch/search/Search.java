@@ -19,6 +19,9 @@ import nl.knmi.adaguc.services.esgfsearch.LockOnQuery;
 import nl.knmi.adaguc.services.esgfsearch.threddscatalog.THREDDSCatalogBrowser;
 import nl.knmi.adaguc.services.esgfsearch.search.cache.DiskCache;
 import nl.knmi.adaguc.services.esgfsearch.search.catalog.CatalogChecker;
+
+import nl.knmi.adaguc.services.esgfsearch.xml.Parser;
+import nl.knmi.adaguc.services.esgfsearch.xml.Parser.XMLElement;
 import nl.knmi.adaguc.tools.*;
 import nl.knmi.adaguc.tools.http.exceptions.BadRequestException;
 import org.json.JSONArray;
@@ -27,7 +30,6 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import nl.knmi.adaguc.tools.JSONResponse.JSONResponseException;
-import nl.knmi.adaguc.tools.MyXMLParser.XMLElement;
 import org.springframework.web.client.HttpStatusCodeException;
 
 
@@ -184,7 +186,7 @@ public class Search {
             }
         }
 
-        MyXMLParser.XMLElement el = new MyXMLParser.XMLElement();
+        XMLElement el = new XMLElement();
 
         try {
             el.parseString(XML);
@@ -196,9 +198,10 @@ public class Search {
 
         JSONObject facetsObj = new JSONObject();
 
-
         try {
-            Vector<XMLElement> lst = el.get("response").getList("lst");
+            Collection<XMLElement> lst = el.get("response").getList("lst");
+
+            String[] excludedFacets = {"citation_url"};
 
             try {
                 Function<XMLElement, Function<String, Predicate<String>>> elementAttributeEquals = (element) -> (attribute) -> (comparison) -> {
