@@ -7,8 +7,6 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -20,7 +18,6 @@ import nl.knmi.adaguc.services.esgfsearch.threddscatalog.THREDDSCatalogBrowser;
 import nl.knmi.adaguc.services.esgfsearch.search.cache.DiskCache;
 import nl.knmi.adaguc.services.esgfsearch.search.catalog.CatalogChecker;
 
-import nl.knmi.adaguc.services.esgfsearch.xml.Parser;
 import nl.knmi.adaguc.services.esgfsearch.xml.Parser.XMLElement;
 import nl.knmi.adaguc.tools.*;
 import nl.knmi.adaguc.tools.http.exceptions.BadRequestException;
@@ -204,25 +201,19 @@ public class Search {
             String[] excludedFacets = {"citation_url"};
 
             try {
-                Function<XMLElement, Function<String, Predicate<String>>> elementAttributeEquals = (element) -> (attribute) -> (comparison) -> {
-                    try {
-                        return element.getAttrValue(attribute).equals(comparison);
-                    } catch (Exception e) {
-                        return false;
-                    }
-                };
-
                 for (XMLElement responseListItem : lst) {
                     if (!responseListItem.getAttrValue("name").equals("facet_counts")) continue;
 
-                    Vector<XMLElement> facet_counts = responseListItem.getList("lst");
+                    Collection<XMLElement> facet_counts = responseListItem.getList("lst");
                     for (XMLElement facet_count : facet_counts) {
                         if (!facet_count.getAttrValue("name").equals("facet_fields")) continue;
 
-                        Vector<XMLElement> facet_fields = facet_count.getList("lst");
+                        Collection<XMLElement> facet_fields = facet_count.getList("lst");
                         for (XMLElement facet_field : facet_fields) {
+                            String facetName = facet_field.getAttrValue("name");
+                            if (Arrays.asList(excludedFacets).contains(facetName)) continue;
 
-                            Vector<XMLElement> facet_names = facet_field.getList("int");
+                            Collection<XMLElement> facet_names = facet_field.getList("int");
                             SortedMap<String, Integer> sortedFacetElements = new TreeMap<>();
 
                             for (XMLElement facet_name : facet_names) {
@@ -259,14 +250,14 @@ public class Search {
         JSONArray searchResults = new JSONArray();
 
         try {
-            Vector<XMLElement> result1 = el.get("response").getList("result");
+            List<XMLElement> result1 = el.get("response").getList("result");
 
             for (XMLElement a : result1) {
 
                 try {
                     if (!a.getAttrValue("name").equals("response")) continue;
                     responseObj.put("numfound", Integer.parseInt(a.getAttrValue("numFound")));
-                    Vector<XMLElement> doclist = a.getList("doc");
+                    List<XMLElement> doclist = a.getList("doc");
 
                     for (XMLElement doc : doclist) {
                         String esgfurl = "";
@@ -276,8 +267,8 @@ public class Search {
 
                         searchResults.put(searchResult);
 
-                        Vector<XMLElement> arrlist = doc.getList("arr");
-                        Vector<XMLElement> strlist = doc.getList("str");
+                        List<XMLElement> arrlist = doc.getList("arr");
+                        List<XMLElement> strlist = doc.getList("str");
 
                         for (XMLElement arr : arrlist) {
                             if (!arr.getAttrValue("name").equals("url")) continue;

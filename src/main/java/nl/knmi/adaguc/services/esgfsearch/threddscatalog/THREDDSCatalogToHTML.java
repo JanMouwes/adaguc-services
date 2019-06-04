@@ -66,7 +66,9 @@ public class THREDDSCatalogToHTML {
 
                 String htmlClass = oddEven == 0 ? "even" : "odd";
 
-                html.append(String.format("<tr class=\"%s\"><td>", htmlClass))
+                html.append("<tr class=\"")
+                    .append(htmlClass)
+                    .append("\"><td>")
                     .append(rn)
                     .append("</td><td>");
 
@@ -76,7 +78,7 @@ public class THREDDSCatalogToHTML {
                 // html+=root + nodeText + "<br/>";
                 // OR
                 // html+=root + "<a href=\"" + hrefURL+"\">" + nodeText+"</a>";
-                html.append((hrefURL == null) ? nodeText + "<br/>" : String.format("<a href=\"%s\">%s</a>", hrefURL, nodeText));
+                html.append((hrefURL == null) ? nodeText + "<br/>" : "<a href=\"" + hrefURL + "\">" + nodeText + "</a>");
 
                 // html+="<td>"+dataSize+"</td>";
                 html.append("<td>")

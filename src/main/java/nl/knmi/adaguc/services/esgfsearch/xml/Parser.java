@@ -21,10 +21,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @SuppressWarnings("deprecation")
@@ -51,14 +49,14 @@ public class Parser {
      */
     @SuppressWarnings("Duplicates")
     static public class XMLElement {
-        private Vector<XMLAttribute> attributes;
-        private Vector<XMLElement> xmlElements;
+        private List<XMLAttribute> attributes;
+        private List<XMLElement> xmlElements;
         private String value = null;
         private String name = null;
 
         public XMLElement() {
-            attributes = new Vector<>();
-            xmlElements = new Vector<>();
+            attributes = new ArrayList<>();
+            xmlElements = new ArrayList<>();
         }
 
         public XMLElement(String name) {
@@ -70,11 +68,11 @@ public class Parser {
             return value;
         }
 
-        public Vector<XMLElement> getElements() {
+        public List<XMLElement> getElements() {
             return xmlElements;
         }
 
-        public Vector<XMLAttribute> getAttributes() {
+        public List<XMLAttribute> getAttributes() {
             return attributes;
         }
 
@@ -302,7 +300,7 @@ public class Parser {
         }
 
 
-        private void _parseJSON(JSONObject jsonObject, Vector<XMLElement> xmlElements, XMLElement child) throws Exception {
+        private void _parseJSON(JSONObject jsonObject, List<XMLElement> xmlElements, XMLElement child) throws Exception {
             JSONArray keys = jsonObject.names();
             if (keys == null) return;
             for (int i = 0; i < keys.length(); ++i) {
@@ -393,14 +391,10 @@ public class Parser {
             }
         }
 
-        public Vector<XMLElement> getList(String s) {
-            Vector<XMLElement> v = new Vector<XMLElement>();
-            for (XMLElement xmlElement : xmlElements) {
-                if (!xmlElement.name.equals(s)) {continue;}
-
-                v.add(xmlElement);
-            }
-            return v;
+        public List<XMLElement> getList(String s) {
+            return xmlElements.stream()
+                              .filter(xmlElement -> xmlElement.name.equals(s))
+                              .collect(Collectors.toCollection(ArrayList::new));
         }
 
         public XMLElement getFirst() {
@@ -416,27 +410,33 @@ public class Parser {
          * @return String of the XML element
          */
         public String toXML(XMLElement el, int depth) {
-            String data = "";
-            if (el == null) return data;
-            for (int i = 0; i < depth; i++) data += "  ";
-            data += "<" + el.name;
+            StringBuilder data = new StringBuilder();
+            if (el == null) return data.toString();
+            for (int i = 0; i < depth; i++) data.append("  ");
+            data.append("<")
+                .append(el.name);
             for (int j = 0; j < el.getAttributes().size(); j++) {
-                data += " " + el.getAttributes().get(j).name + "=\"" + StringEscapeUtils.escapeXml(el.getAttributes()
-                                                                                                     .get(j).value) + "\"";
+                data.append(" ")
+                    .append(el.getAttributes()
+                              .get(j).name)
+                    .append("=\"")
+                    .append(StringEscapeUtils.escapeXml(el.getAttributes()
+                                                          .get(j).value))
+                    .append("\"");
             }
-            data += ">\n";
+            data.append(">\n");
             for (int j = 0; j < el.xmlElements.size(); j++) {
-                data += toXML(el.xmlElements.get(j), depth + 1);
+                data.append(toXML(el.xmlElements.get(j), depth + 1));
             }
             if (el.getValue() != null) {
                 if (el.getValue().length() > 0) {
-                    for (int i = 0; i < depth; i++) data += "  ";
-                    data += "  " + el.getValue() + "\n";
+                    for (int i = 0; i < depth; i++) data.append("  ");
+                    data.append("  ").append(el.getValue()).append("\n");
                 }
             }
-            for (int i = 0; i < depth; i++) data += "  ";
-            data += "</" + el.name + ">\n";
-            return data;
+            for (int i = 0; i < depth; i++) data.append("  ");
+            data.append("</").append(el.name).append(">\n");
+            return data.toString();
 
         }
 
@@ -516,33 +516,33 @@ public class Parser {
         /**
          * Converts a list of XML elements all with the same name to a JSON string.
          *
-         * @param vector The list of XML elements with the same name
-         * @param depth  The depth of the XML elements
+         * @param elements The list of XML elements with the same name
+         * @param depth    The depth of the XML elements
          *
          * @return JSON formatted string
          */
-        private String xmlElementstoJSON(Vector<XMLElement> vector, int depth, Options options) {
+        private String xmlElementstoJSON(List<XMLElement> elements, int depth, Options options) {
             StringBuilder data = new StringBuilder();
-            String name = vector.get(0).name;
+            String name = elements.get(0).name;
 
             if (options == Options.STRIPNAMESPACES) {
                 name = name.substring(name.indexOf(":") + 1);
             }
             name = jsonEncode(name);
-            //DebugConsole.println(name);
+
             data.append("\"").append(name).append("\":");
             boolean isArray = false;
-            if (vector.size() > 1) isArray = true;
+            if (elements.size() > 1) isArray = true;
 
             if (isArray) {
                 data.append("[\n");
             }
-            for (int j = 0; j < vector.size(); j++) {
+            for (int j = 0; j < elements.size(); j++) {
                 if (j > 0) {
                     data.append(",\n");
                 }
                 data.append("{");
-                data.append(toJSON(vector.get(j), depth + 1, options));
+                data.append(toJSON(elements.get(j), depth + 1, options));
                 data.append("}");
             }
             if (isArray) {
@@ -667,7 +667,7 @@ public class Parser {
                     j++;
                 }
                 ;
-                Vector<XMLElement> b = a.getList(elements[j]);
+                List<XMLElement> b = a.getList(elements[j]);
                 if (b.size() > 0) {
                     String[] results = new String[b.size()];
                     for (int i = 0; i < b.size(); i++) {
